@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Решатель: прототип и предложение</title>
+<style>
+:root{
+  --paper:#EEF1F4; --card:#FFFFFF; --ink:#1C2733; --ink2:#5A6B7A;
+  --pole-a:#1F4E79; --pole-a-soft:#DDE8F2; --pole-b:#C96F1E; --pole-b-soft:#F6E8D8;
+  --good:#2E7D4F; --line:rgba(28,39,51,.16); --line2:rgba(28,39,51,.08);
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --serif:'Iowan Old Style',Georgia,'Times New Roman',serif;
+  --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root{
+  --paper:#12181F; --card:#1A222B; --ink:#E7ECF0; --ink2:#95A4B1;
+  --pole-a:#7FB3E0; --pole-a-soft:#20303F; --pole-b:#E8964A; --pole-b-soft:#39281A;
+  --good:#5FBE85; --line:rgba(231,236,240,.18); --line2:rgba(231,236,240,.08);
+}}
+:root[data-theme="light"]{
+  --paper:#EEF1F4; --card:#FFFFFF; --ink:#1C2733; --ink2:#5A6B7A;
+  --pole-a:#1F4E79; --pole-a-soft:#DDE8F2; --pole-b:#C96F1E; --pole-b-soft:#F6E8D8;
+  --good:#2E7D4F; --line:rgba(28,39,51,.16); --line2:rgba(28,39,51,.08);
+}
+:root[data-theme="dark"]{
+  --paper:#12181F; --card:#1A222B; --ink:#E7ECF0; --ink2:#95A4B1;
+  --pole-a:#7FB3E0; --pole-a-soft:#20303F; --pole-b:#E8964A; --pole-b-soft:#39281A;
+  --good:#5FBE85; --line:rgba(231,236,240,.18); --line2:rgba(231,236,240,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 var(--sans)}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px 80px}
+header{position:sticky;top:0;z-index:10;background:var(--paper);border-bottom:1px solid var(--line2);padding:14px 20px}
+.hrow{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{font:700 18px var(--sans);letter-spacing:.2px}
+.brand small{display:block;font:400 12px var(--sans);color:var(--ink2);letter-spacing:.4px}
+.seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px;margin-left:auto}
+.seg button{border:0;background:transparent;color:var(--ink2);font:600 14px var(--sans);padding:8px 16px;border-radius:8px;cursor:pointer}
+.seg button.on{background:var(--pole-a);color:#fff}
+:root[data-theme="dark"] .seg button.on, .darkish .seg button.on{color:#0e1116}
+main section.tab{display:none}
+main section.tab.on{display:block}
+h1{font:700 34px/1.2 var(--serif);text-wrap:balance;margin:36px 0 8px}
+h2{font:700 22px/1.3 var(--serif);margin:36px 0 10px}
+h3{font:700 16px var(--sans);margin:22px 0 8px}
+.eyebrow{font:700 11px var(--sans);letter-spacing:1.6px;text-transform:uppercase;color:var(--pole-b);margin-top:34px}
+p{max-width:64ch}
+.lead{font-size:18px;color:var(--ink2)}
+.sig{font:italic 15px var(--serif);color:var(--ink2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:14px 0}
+.step-eyebrow{font:700 11px var(--mono);letter-spacing:1.2px;color:var(--pole-a);text-transform:uppercase}
+.formula{font:14px/1.7 var(--mono);background:var(--pole-a-soft);border-radius:8px;padding:12px 14px;margin:10px 0}
+label{display:block;font:600 13px var(--sans);color:var(--ink2);margin:12px 0 4px}
+input[type=text],textarea{width:100%;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font:15px var(--sans)}
+textarea{min-height:64px;resize:vertical}
+input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--pole-a);outline-offset:1px}
+.btn{display:inline-block;border:0;border-radius:9px;background:var(--pole-a);color:#fff;font:600 15px var(--sans);padding:11px 20px;cursor:pointer;margin-top:14px}
+:root[data-theme="dark"] .btn{color:#0e1116}
+@media (prefers-color-scheme: dark){.btn{color:#0e1116}}
+:root[data-theme="light"] .btn{color:#fff}
+.btn.ghost{background:transparent;color:var(--pole-a);border:1px solid var(--pole-a)}
+.btn.spark{background:var(--pole-b)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;font:14px var(--sans);cursor:pointer}
+.chip.on{background:var(--pole-a);border-color:var(--pole-a);color:#fff}
+:root[data-theme="dark"] .chip.on{color:#0e1116}
+.chip.res{background:var(--pole-b-soft);border-color:transparent}
+.hint{font:13px var(--sans);color:var(--ink2)}
+.axis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+@media(max-width:600px){.axis{grid-template-columns:1fr}}
+.axis button{text-align:left;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:12px 14px;font:600 14px var(--sans);cursor:pointer}
+.axis button.on{border-color:var(--pole-b);background:var(--pole-b-soft)}
+.pcard{border-left:3px solid var(--pole-b);padding:10px 14px;background:var(--card);border-radius:0 10px 10px 0;margin:10px 0}
+.pcard b{font:700 15px var(--sans)}
+.pcard .ex{font:13px var(--sans);color:var(--ink2);margin-top:4px}
+.story{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--card);margin:10px 0}
+.story .gl{font-size:26px;line-height:1.2}
+.story b{font:700 14px var(--sans)}
+.story p{font:13px/1.55 var(--sans);color:var(--ink2);margin:4px 0 0}
+.idea{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0;background:var(--card)}
+.idea .minus{color:var(--pole-b);font:13px var(--sans)}
+.dots{display:flex;gap:6px;margin:26px 0 4px}
+.dots i{width:26px;height:4px;border-radius:2px;background:var(--line);transition:background .3s}
+.dots i.on{background:var(--pole-a)}
+.final{border:2px solid var(--good);border-radius:12px;padding:18px 20px;margin:16px 0;background:var(--card)}
+.vs{display:flex;align-items:center;gap:10px;font:700 13px var(--mono);color:var(--ink2);margin:8px 0}
+.vs .a{color:var(--pole-a)} .vs .b{color:var(--pole-b)}
+table{border-collapse:collapse;width:100%;font:14px var(--sans)}
+td,th{border-top:1px solid var(--line2);padding:9px 10px 9px 0;text-align:left;vertical-align:top}
+th{font:700 12px var(--sans);letter-spacing:.8px;text-transform:uppercase;color:var(--ink2)}
+.twrap{overflow-x:auto}
+ul{padding-left:20px}
+li{margin:6px 0;max-width:62ch}
+.q{font:italic 17px/1.6 var(--serif);border-left:3px solid var(--pole-b);padding:2px 0 2px 16px;color:var(--ink);margin:18px 0;max-width:58ch}
+footer{margin-top:56px;border-top:1px solid var(--line2);padding-top:16px;font:13px var(--sans);color:var(--ink2)}
+@media (prefers-reduced-motion: no-preference){
+  .tab.on .card{animation:up .35s ease both}
+  @keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+}
+</style>
+
+</head>
+<body>
+<header><div class="hrow">
+  <div class="brand">Решатель<small>технология вместо озарения</small></div>
+  <div class="seg" role="tablist">
+    <button id="tabAppBtn" class="on" onclick="showTab('app')" role="tab">Приложение</button>
+    <button id="tabDocBtn" onclick="showTab('doc')" role="tab">Суть и предложение</button>
+  </div>
+</div></header>
+
+<main class="wrap">
+
+<!-- ================= ПРИЛОЖЕНИЕ ================= -->
+<section id="tab-app" class="tab on">
+  <h1>Из проблемы в ходы. За один разговор.</h1>
+  <p class="lead">Это живой прототип ядра: опишите ситуацию своими словами, и алгоритм проведёт вас по шагам до конкретных идей. Без обучения, без терминов.</p>
+
+  <div class="dots" id="dots"></div>
+
+  <!-- ШАГ 0 -->
+  <div class="card" id="s0">
+    <div class="step-eyebrow">Шаг 1 · Ситуация</div>
+    <h3>Что происходит? Расскажите обычными словами</h3>
+    <textarea id="situation" placeholder="Например: постоянные клиенты просят скидку. Дать - жалко маржу, не дать - боюсь, уйдут."></textarea>
+    <div class="hint">Или возьмите готовый пример:</div>
+    <div class="chips">
+      <button class="chip" onclick="demo('coffee')">Кофейня и скидки</button>
+      <button class="chip" onclick="demo('button')">Кнопка в приложении</button>
+      <button class="chip" onclick="demo('vtulka')">Гибкое соединение (поиск аналога)</button>
+    </div>
+    <label>Что вы хотите получить в результате?</label>
+    <input type="text" id="goal" placeholder="Клиент остаётся довольным, прибыль не падает">
+    <label>Что нельзя менять?</label>
+    <input type="text" id="limits" placeholder="Не поднимать цены, не терять клиентов">
+    <button class="btn" onclick="go(1)">Дальше</button>
+  </div>
+
+  <!-- ШАГ 1: ПРОТИВОРЕЧИЕ -->
+  <div class="card" id="s1" hidden>
+    <div class="step-eyebrow">Шаг 2 · Конфликт</div>
+    <h3>Соберём противоречие</h3>
+    <p class="hint">Почти каждая застрявшая задача устроена одинаково: очевидный ход что-то улучшает и одновременно что-то портит. Назовём это честно.</p>
+    <div class="formula">Если <b>[очевидное действие]</b>, то <b>[что улучшится]</b>, но <b>[что испортится]</b></div>
+    <label>Очевидное действие</label><input type="text" id="tpAct" placeholder="дать скидку">
+    <label>Что улучшится</label><input type="text" id="tpGood" placeholder="клиент остаётся">
+    <label>Что испортится</label><input type="text" id="tpBad" placeholder="маржа падает">
+    <div class="vs"><span class="a" id="vsA">А растёт</span> <span>против</span> <span class="b" id="vsB">Б падает</span></div>
+    <button class="btn" onclick="go(2)">Обострить до идеала</button>
+  </div>
+
+  <!-- ШАГ 2: ИКР -->
+  <div class="card" id="s2" hidden>
+    <div class="step-eyebrow">Шаг 3 · Идеал</div>
+    <h3>Сформулируем идеальный результат</h3>
+    <p class="hint">Формула из практики бизнес-тренингов: смело, до предела. Идеал отсекает слабые варианты ещё до перебора.</p>
+    <div class="formula"><b>[кто/что]</b> САМ <b>[делает нужное]</b>, не тратя, не портя, даже принося пользу</div>
+    <label>Кто или что</label><input type="text" id="ikrWho" placeholder="клиент">
+    <label>Сам делает что</label><input type="text" id="ikrWhat" placeholder="остаётся и приводит новых">
+    <div id="ikrEcho" class="formula" style="background:var(--pole-b-soft)" hidden></div>
+    <button class="btn ghost" onclick="echoIkr()">Показать мой идеал</button>
+    <button class="btn" onclick="go(3)">Уже вижу решение? Нет, дальше</button>
+    <button class="btn spark" onclick="go(4)">Вижу решение! К идеям</button>
+  </div>
+
+  <!-- ШАГ 3: РЕСУРСЫ + РАЗДЕЛЕНИЕ -->
+  <div class="card" id="s3" hidden>
+    <div class="step-eyebrow">Шаг 4 · Ресурсы и ходы</div>
+    <h3>Что уже есть и поможет даром?</h3>
+    <p class="hint">Осмотритесь вокруг задачи и спросите каждый предмет, человека, привычку: «ты можешь помочь?». Правило метода: тот, кто мешает, тот и поможет.</p>
+    <div class="chips" id="resChips"></div>
+    <label>Добавить свой ресурс</label>
+    <div style="display:flex;gap:8px"><input type="text" id="resInput" placeholder="пустые часы дня"><button class="btn" style="margin-top:0" onclick="addRes()">+</button></div>
+
+    <h3 style="margin-top:26px">Теперь развести требования врозь</h3>
+    <p class="hint">Противоречие не сглаживают - его разрешают, разделив требования. Выберите ход и получите подсказки с историями-аналогами:</p>
+    <div class="axis" id="axisBox"></div>
+    <div id="axisOut"></div>
+    <button class="btn ghost" onclick="unstick()">Заклинило? Расклинить</button>
+    <div id="unstickOut"></div>
+    <button class="btn" onclick="go(4)">К идеям</button>
+  </div>
+
+  <!-- ШАГ 4: ИДЕИ -->
+  <div class="card" id="s4" hidden>
+    <div class="step-eyebrow">Шаг 5 · Веер идей</div>
+    <h3>Записывайте идеи. У каждой - обязательный минус</h3>
+    <p class="hint">Идея без осознанного минуса не принимается: минус - это ваша следующая маленькая задача, а не приговор. Идея, пришедшая дважды разными путями, - сильнейшая.</p>
+    <label>Идея</label><input type="text" id="ideaText" placeholder="скидка не сейчас, а на следующую покупку">
+    <label>Её обязательный минус</label><input type="text" id="ideaMinus" placeholder="надо печатать карточки и объяснять">
+    <button class="btn" onclick="addIdea()">Добавить идею</button>
+    <div id="ideasBox"></div>
+    <button class="btn" id="toFinal" onclick="go(5)" hidden>Выбрать и сделать первый шаг</button>
+  </div>
+
+  <!-- ШАГ 5: ФИНАЛ -->
+  <div class="card" id="s5" hidden>
+    <div class="step-eyebrow">Шаг 6 · Первый шаг</div>
+    <h3>Что вы сделаете в ближайшие 24 часа?</h3>
+    <p class="hint">Правило тренинга: «фишку сразу пробовать - месяц форы». Решение, не превращённое в шаг, испаряется.</p>
+    <input type="text" id="firstStep" placeholder="Завтра напечатаю карточки «6-й кофе за полцены»">
+    <button class="btn spark" onclick="finish()">Готово - собрать итог</button>
+    <div id="finalBox"></div>
+  </div>
+
+  <p class="hint" style="margin-top:26px">Под капотом прототипа - крошечная часть собранной базы: в полной версии 126 приёмов и 673 истории изобретений с подбором по структуре задачи. Как это устроено и что я предлагаю делать дальше - во вкладке «Суть и предложение».</p>
+</section>
+
+<!-- ================= ОПИСАНИЕ ================= -->
+<section id="tab-doc" class="tab">
+  <h1>Приложение, которое решает запросы людей</h1>
+  <p class="sig">Александр · июль 2026 · материал к нашему разговору</p>
+
+  <p class="lead">Мы говорили о приложении, которое по запросу подбирает образы и подводит человека к решению. Я прогнал через анализ весь корпус: тридцать с лишним книг ТРИЗ от Альтшуллера до свежих изданий 2026 года, полный курс Петрова, Орлова, Шпаковского, транскрибации бизнес-тренингов и лекций. Вот что из этого вышло и что я предлагаю.</p>
+
+  <div class="eyebrow">Главный вывод</div>
+  <h2>Технология существует, и она уже собрана</h2>
+  <p>Во всех школах метода под разными названиями живёт один и тот же костяк. Сырая ситуация превращается в задачу. Задача - в конфликт «одно улучшается, другое портится». Конфликт - в идеал «само работает, не тратя, не портя, даже принося пользу». Дальше разбор ресурсов «что уже есть и поможет даром», разведение требований по времени, месту и частям, подсказки из базы приёмов и историй, и на выходе веер идей, у каждой из которых обязательный минус. Решение рождается не озарением, а цепочкой переформулировок. Именно поэтому оно воспроизводимо: как суп по рецепту, каждый раз.</p>
+  <p>Я свёл этот костяк в единый пошаговый алгоритм и прогнал на трёх разных задачах: механика (то самое гибкое поворотное соединение), интерфейс (куда деть кнопку) и бизнес (скидки в кофейне). Работает на всех трёх без изменения шагов. Прототип алгоритма - в соседней вкладке, его можно потрогать прямо сейчас.</p>
+
+  <div class="eyebrow">Твоя гипотеза</div>
+  <h2>База историй - это и есть двигатель. Классики согласны</h2>
+  <p>Помнишь твою мысль: сила метода не в магии теории, а в накопленной базе того, как люди доходили до решений? Корпус это подтверждает дословно. Орлов строит концепцию «банка примеров» по принципу «внёс десять, получил тысячу». Альтшуллер требовал от учеников личную картотеку. Шпаковский называл своё Дерево эволюции «грандиозной базой систем-аналогов» и мечтал о «Генераторе концепций» с базой изображений. Он его так и не сделал. Никто не сделал. Ниша свободна: даже книга 2026 года даёт обзор метода, а не инструмент.</p>
+  <p>Я уже собрал стартовый капитал этой базы в машиночитаемом виде: <b>126 приёмов</b> (после склейки дублей из всех школ), <b>673 истории изобретений</b> с разметкой по сферам, из них 118 с образным ходом решения, и словарь на 99 терминов со сведением расхождений между школами.</p>
+
+  <div class="eyebrow">Про картинки</div>
+  <h2>Образы работают. Но с двумя правилами</h2>
+  <p>Честная картина из корпуса. За: метод полон механик «образ как подсказка» - каталоги «картинка, принцип, изобретение», аналоги из природы, случайный стимул, и прямое наблюдение, что конкретный пример информативнее абстракции. Против: Альтшуллер экспериментально показал, что показанный заранее образ-прототип приковывает к себе большинство решателей вместо того, чтобы освобождать.</p>
+  <p>Отсюда два правила продукта: образы подаём после формулировки идеала, а не вместо неё, и ряд всегда разнородный - разные сферы, разные принципы, подбор по структуре задачи, а не по ключевым словам. Каждая картинка - это тройка «образ + принцип + история». А сам мост «показали ряд - пришло решение» никто в литературе не проверял. Это наш эксперимент и наше преимущество: проверим на живых прогонах в прототипе.</p>
+
+  <div class="eyebrow">Продукт</div>
+  <h2>Три режима одного приложения</h2>
+  <div class="twrap"><table>
+    <tr><th>Режим</th><th>Для кого</th><th>Что делает</th></tr>
+    <tr><td><b>Решатель</b></td><td>малый бизнес, быт</td><td>диалог по шагам от сырой ситуации до веера ходов и первого шага на завтра; формулы-слоты, карточки-ресурсы, идеи с обязательными минусами</td></tr>
+    <tr><td><b>Поиск аналога</b></td><td>инженеры, дизайнеры</td><td>функциональная формулировка без терминов, лента аналогов по структуре задачи, линии развития с «пустыми клетками», автогенерация поисковых запросов. То, что ты делал руками днями, - за минуты</td></tr>
+    <tr><td><b>Расклинить</b></td><td>все</td><td>микрорежим при стопоре: случайный стимул, чужая история, правило «когда идеи кончились - найди ещё пять»</td></tr>
+  </table></div>
+  <p>Продаём не «ТРИЗ» (это слово в маркетинге только мешает, у него репутация сложности), а результат: <span class="q" style="display:block">спокойный путь от проблемы к ходам. Перестаём переживать, берём алгоритм и идём шагами.</span> Это цитата живого участника тренинга - главный эффект метода психологический, и это лучшее, что можно продавать.</p>
+
+  <div class="eyebrow">Кому это надо</div>
+  <h2>Три аудитории с подтверждённым спросом</h2>
+  <ul>
+    <li><b>Малый бизнес и самозанятые.</b> Тренинги по бизнес-ТРИЗ собирали платные группы кофеен, фитнесов, салонов, турагентств. Полное обучение стоит 9-12 месяцев жизни, поэтому его почти никто не проходит. Инструмент без обучения снимает этот барьер.</li>
+    <li><b>Инженеры и дизайнеры малых контор.</b> Наша с тобой история: дни на поиск аналога по патентам и картинкам. Структурный поиск решает это за минуты, а сообщества типа GrabCAD и фриланс-конкурсы - готовые места, где эти люди уже сидят.</li>
+    <li><b>Находчивые люди в быту.</b> Упрощённый семишаговый алгоритм работает даже у дошкольников - проверено целой ветвью педагогической литературы. Взрослому новичку он тем более по силам.</li>
+  </ul>
+
+  <div class="eyebrow">Предложение</div>
+  <h2>Что я предлагаю делать, по порядку</h2>
+  <ul>
+    <li><b>1. Прототип диалога</b> (ядро уже работает - вкладка рядом). Доводим до кликабельного сценария на реальных базах и показываем друг другу и первым живым людям.</li>
+    <li><b>2. Эксперимент с образным рядом.</b> Двадцать-тридцать прогонов: половина с картинками-аналогами, половина без. Меряем долю дошедших до выбранной идеи и время. Это ответ на главный открытый вопрос, которого нет ни в одной книге.</li>
+    <li><b>3. MVP.</b> Мобильный веб: экспресс-трек Решателя, базы, личная картотека решённых задач. Картотека - это начало сетевого эффекта: каждая решённая задача пользователя пополняет общую базу историй.</li>
+    <li><b>4. Этап два: глубокий трек</b> для сложных задач (стандарты, полный алгоритм) и профессиональный «Поиск аналога» по подписке.</li>
+    <li><b>5. Этап три: соцсеть.</b> Твоя идея с эскизами и генерацией образов голосом - сюда: лента задач и решений, люди выкладывают ходы, лайкают, забирают себе. Референс GrabCAD, но вокруг решения задач, а не только моделей. Соцмеханика имеет смысл, когда ядро живое и база наполняется, поэтому третьим шагом, не первым.</li>
+  </ul>
+
+  <div class="eyebrow">Честные границы</div>
+  <h2>Чего не обещаем</h2>
+  <ul>
+    <li>Гарантирован не готовый ответ, а сильное сужение: веер направлений вместо тумана. Финальное решение всегда собирает человек - и это правильно: своё решение внедряют, чужое откладывают.</li>
+    <li>Сложные инженерные задачи требуют знаний предметной области. Такие запросы честно маркируем и ведём длинным треком.</li>
+    <li>Эффект накопления постепенный: в литературе это называют «трудно первую сотню задач, потом легко». Поэтому продукт - тренажёр с растущей базой, а не волшебная кнопка.</li>
+  </ul>
+
+  <div class="eyebrow">К обсуждению</div>
+  <h2>Пять вопросов на наш созвон</h2>
+  <ul>
+    <li>Первый сегмент: малый бизнес (быстрее проверка) или инженеры (глубже боль, твоя экспертиза)?</li>
+    <li>Соцсеть: согласен, что этап три, или видишь её раньше?</li>
+    <li>Язык продукта без слова «ТРИЗ» - ок?</li>
+    <li>Твои ручные прогоны поиска - формализуем в протокол эксперимента?</li>
+    <li>Роли и вклад каждого - пора проговорить.</li>
+  </ul>
+
+  <footer>Под этой страницей: полный разбор 36 источников, единая технология с тестовыми прогонами, базы в JSON и концепт-документ. Всё готово к работе. А.</footer>
+</section>
+</main>
+
+<script>
+// ---------- данные (выборка из баз проекта) ----------
+const AXES=[
+ {id:'time',name:'Развести во времени',desc:'Одно требование - в один момент, другое - в другой',
+  priems:[{n:'Предварительное действие',t:'Сделать нужное заранее, до пикового момента',e:'Скидка не сейчас, а на следующую покупку: сегодня маржа цела, возврат гарантирован'},
+          {n:'Периодическое действие',t:'Действовать импульсами, а паузы использовать для другого',e:'«Спящие» часы Seiko: механизм работает только когда нужен'}],
+  stories:[{g:'🚦',b:'Светофор',p:'Дороге нужно быть открытой и закрытой. Неразрешимо? Разнесли по времени - и конфликт исчез.'},
+           {g:'🕰',b:'Кнопка, которой нет',p:'Интерфейс: кнопка появляется только в момент готовности пользователя. Экран чист, действие под пальцем.'}]},
+ {id:'space',name:'Развести в пространстве',desc:'Одно требование - в одном месте, другое - в другом',
+  priems:[{n:'Местное качество',t:'Разным частям - разные свойства, каждая в лучших для неё условиях',e:'Плавающая кнопка в зоне большого пальца, контент - на остальном экране'},
+          {n:'Вынесение',t:'Отделить мешающую часть или выделить единственно нужную',e:'Кондиционер выносит шум наружу; горючее вертолёта остаётся на земле'}],
+  stories:[{g:'🐟',b:'Глаз четырёхглазой рыбы',p:'Смотреть и над водой, и под водой? Сетчатка разделена на две зоны. Природа развела требования в пространстве.'},
+           {g:'☕',b:'Скидка в мёртвые часы',p:'Кофейня: скидка действует только днём, когда зал пуст. Маржа вечера не тронута, пустые часы приносят деньги.'}]},
+ {id:'struct',name:'Части и целое',desc:'Часть обладает одним свойством, целое - противоположным',
+  priems:[{n:'Дробление',t:'Разделить объект на независимые части, вплоть до гибкой цепи',e:'Нож с отламываемыми сегментами; изгородь с шарниром'},
+          {n:'Объединение',t:'Соединить однородное - и появится новое качество',e:'Кофе + маржинальный десерт: набор дешевле, прибыль выше'}],
+  stories:[{g:'🛡',b:'Кольчуга',p:'Жёсткая в каждом кольце, гибкая целиком. Классика разведения «части и целое».'},
+           {g:'🌾',b:'Вал Лаваля и камыш',p:'Вал наращивали жёсткостью - ломался. Камыш подсказал обратное: гибкий стебель сам уравновешивается при вращении.'}]},
+ {id:'cond',name:'По условию',desc:'Для одного воздействия - одно свойство, для другого - другое',
+  priems:[{n:'Обратить вред в пользу',t:'Усилить вредное или сложить два вредных, чтобы получить пользу',e:'Просьба о скидке превращается в канал привлечения: «приведи друга - обе чашки дешевле»'},
+          {n:'Частичное или избыточное действие',t:'Не дозировать точно: дать чуть больше там, где это дёшево',e:'Вместо снижения цены - щедрый бонус с копеечной себестоимостью'}],
+  stories:[{g:'🦺',b:'Жидкая броня',p:'Мягкая при движении, твёрдая при ударе. Свойство зависит от воздействия - обе стороны довольны.'},
+           {g:'🕸',b:'Застёжка скафандра',p:'Группа шла цепочкой аналогий: насекомые, паук, стежки - и пришла к спиральным пружинам в резине. Образ привёл к решению.'}]},
+ {id:'sub',name:'Сменить состояние',desc:'Твёрдое, жидкое, газ, поле: пусть вещество само меняется',
+  priems:[{n:'Изменение агрегатного состояния',t:'Пусть объект будет твёрдым, когда надо, и текучим, когда надо',e:'Лёд как временная форма: мишени изо льда, «Град - это лёд!»'},
+          {n:'Посредник',t:'Ввести промежуточный объект, который потом легко убрать',e:'Мокрая тряпочка на нос льву; жидкий металл для подвода тока'}],
+  stories:[{g:'🏭',b:'Флоат-стекло',p:'Вместо конвейера с колёсами - ванна расплавленного олова. Идеально ровное стекло делает сама физика.'},
+           {g:'✈️',b:'Выхлоп Ил-2 в бензобак',p:'Нужен негорючий газ? Он уже есть: собственные выхлопные газы. Ресурс нашёлся, когда убрали слово «азот».'}]}
+];
+const RES_SUGGEST=['сам «мешающий» человек','пустое время / мёртвые часы','то, что выбрасываем','друзья и соседи по задаче','привычка клиента','место и стены','уже сделанная работа','жадность/страх/любопытство'];
+const UNSTICK=[
+ {g:'🐍',b:'Кольцо Кекуле',p:'Формула бензола пришла из образа змеи, кусающей хвост. На что похожа ВАША задача, если закрыть глаза?'},
+ {g:'🌰',b:'Стань орехом',p:'Задачу о расколе ореха решили, представив себя ядром. Побудьте минуту «внутри» вашей проблемы: чего ей хочется?'},
+ {g:'🧲',b:'Линия развития',p:'Жёсткое - шарнир - много звеньев - гофра - магнитная связь без контакта. Где на этой линии ваш объект? Сдвиньте на шаг.'},
+ {g:'🌀',b:'Оператор РВС',p:'Мысленно увеличьте задачу в тысячу раз. Теперь уменьшите до песчинки. Что стало очевидным?'},
+ {g:'🪶',b:'Правило пяти',p:'Идеи кончились? Именно сейчас начинается настоящее: найдите ещё пять, любых, даже смешных.'},
+ {g:'🔦',b:'Высотомер и пружина',p:'Изобретатель бился неделями, а решение пришло образом свивающейся пружины на прогулке. Смените контекст на 10 минут.'}
+];
+const DEMOS={
+ coffee:{sit:'Постоянные клиенты кофейни просят скидку. Дать - жалко маржу, не дать - боюсь, уйдут.',goal:'Клиент остаётся доволен, прибыль не падает',lim:'Не поднимать цены, не терять клиентов',act:'дать скидку',good:'клиент остаётся',bad:'маржа падает',who:'клиент',what:'остаётся и приводит новых'},
+ button:{sit:'В приложении важная кнопка: сделать большой - тесно контенту, маленькой - её не находят.',goal:'Действие совершается легко, экран чистый',lim:'Не перегружать экран',act:'увеличить кнопку',good:'легко попадать',bad:'контенту тесно',who:'экран',what:'подставляет действие в нужный момент'},
+ vtulka:{sit:'Нужно соединение двух звеньев: держит нагрузку и при этом поворачивается, изгибается.',goal:'Жёсткость и подвижность одновременно',lim:'Габариты узла',act:'сделать жёстче',good:'держит нагрузку',bad:'теряется подвижность',who:'соединение',what:'держит и гнётся где нужно'}
+};
+// ---------- логика ----------
+let step=0;const STEPS=6;let ideas=[];let axisUsed=new Set();
+function showTab(t){document.getElementById('tab-app').classList.toggle('on',t==='app');document.getElementById('tab-doc').classList.toggle('on',t==='doc');document.getElementById('tabAppBtn').classList.toggle('on',t==='app');document.getElementById('tabDocBtn').classList.toggle('on',t==='doc');window.scrollTo({top:0});}
+function dots(){const d=document.getElementById('dots');d.innerHTML='';for(let i=0;i<STEPS;i++){const s=document.createElement('i');if(i<=step)s.className='on';d.appendChild(s);}}
+function go(n){step=n;for(let i=0;i<STEPS;i++){document.getElementById('s'+i).hidden=(i!==n);}dots();if(n===1){document.getElementById('vsA').textContent=(val('tpGood')||'А')+' ↑';document.getElementById('vsB').textContent=(val('tpBad')||'Б')+' ↓';}if(n===3)renderAxes();document.getElementById('s'+n).scrollIntoView({behavior:'smooth',block:'start'});}
+function val(id){return document.getElementById(id).value.trim();}
+function demo(k){const d=DEMOS[k];situation.value=d.sit;goal.value=d.goal;limits.value=d.lim;tpAct.value=d.act;tpGood.value=d.good;tpBad.value=d.bad;ikrWho.value=d.who;ikrWhat.value=d.what;}
+function echoIkr(){const e=document.getElementById('ikrEcho');e.hidden=false;e.innerHTML='<b>'+(val('ikrWho')||'...')+'</b> САМ <b>'+(val('ikrWhat')||'...')+'</b>, не тратя, не портя, даже принося пользу';}
+function renderAxes(){const rb=document.getElementById('resChips');if(!rb.childElementCount)RES_SUGGEST.forEach(r=>pushRes(r));const box=document.getElementById('axisBox');box.innerHTML='';AXES.forEach(a=>{const b=document.createElement('button');b.textContent=a.name;b.title=a.desc;b.onclick=()=>openAxis(a,b);box.appendChild(b);});}
+function pushRes(text){const c=document.createElement('button');c.className='chip res';c.textContent=text;c.onclick=()=>c.classList.toggle('on');document.getElementById('resChips').appendChild(c);}
+function addRes(){const v=val('resInput');if(v){pushRes(v);resInput.value='';}}
+function openAxis(a,btn){axisUsed.add(a.id);document.querySelectorAll('.axis button').forEach(x=>x.classList.remove('on'));btn.classList.add('on');const o=document.getElementById('axisOut');o.innerHTML='<p class="hint" style="margin-top:14px"><b>'+a.name+':</b> '+a.desc+'.</p>'+a.priems.map(p=>'<div class="pcard"><b>'+p.n+'</b><div>'+p.t+'</div><div class="ex">Пример: '+p.e+'</div></div>').join('')+a.stories.map(s=>'<div class="story"><div class="gl">'+s.g+'</div><div><b>'+s.b+'</b><p>'+s.p+'</p></div></div>').join('')+'<p class="hint">Смотрите на аналог и спрашивайте: как ЭТОТ ход выглядит в моей задаче?</p>';}
+function unstick(){const u=UNSTICK[Math.floor(Math.random()*UNSTICK.length)];document.getElementById('unstickOut').innerHTML='<div class="story" style="border-color:var(--pole-b)"><div class="gl">'+u.g+'</div><div><b>'+u.b+'</b><p>'+u.p+'</p></div></div>';}
+function addIdea(){const t=val('ideaText'),m=val('ideaMinus');if(!t)return;if(!m){alert('Назовите минус идеи - без него идея не принимается. Минус это просто ваша следующая маленькая задача.');return;}ideas.push({t,m,sel:false});ideaText.value='';ideaMinus.value='';renderIdeas();}
+function renderIdeas(){const b=document.getElementById('ideasBox');b.innerHTML=ideas.map((i,n)=>'<div class="idea"><label style="margin:0"><input type="checkbox" '+(i.sel?'checked':'')+' onchange="ideas['+n+'].sel=this.checked"> беру в работу</label><div><b>'+i.t+'</b></div><div class="minus">минус: '+i.m+'</div></div>').join('');document.getElementById('toFinal').hidden=ideas.length===0;}
+function finish(){const sel=ideas.filter(i=>i.sel);const res=[...document.querySelectorAll('#resChips .chip.on')].map(c=>c.textContent);document.getElementById('finalBox').innerHTML='<div class="final"><b>Итог сессии</b><p style="margin:8px 0 4px"><b>Задача:</b> '+(val('situation')||'')+'</p><p style="margin:4px 0"><b>Противоречие:</b> если '+(val('tpAct')||'...')+', то '+(val('tpGood')||'...')+', но '+(val('tpBad')||'...')+'</p><p style="margin:4px 0"><b>Идеал:</b> '+(val('ikrWho')||'...')+' сам '+(val('ikrWhat')||'...')+', не тратя, не портя, даже принося пользу</p>'+(res.length?'<p style="margin:4px 0"><b>Ресурсы:</b> '+res.join(', ')+'</p>':'')+(sel.length?'<p style="margin:4px 0"><b>Выбранные ходы:</b></p><ul>'+sel.map(i=>'<li>'+i.t+' <span class="minus">(минус: '+i.m+')</span></li>').join('')+'</ul>':'<p class="hint">Идеи не выбраны - вернитесь на шаг назад.</p>')+'<p style="margin:4px 0"><b>Первый шаг (24 часа):</b> '+(val('firstStep')||'...')+'</p><p class="hint" style="margin-top:10px">В полной версии эта карточка сохраняется в личную картотеку и пополняет общую базу историй.</p></div>';}
+dots();
+</script>
+</body>
+</html>
