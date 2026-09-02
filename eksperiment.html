@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Решатель - сессия</title>
+<style>
+:root{
+  --paper:#EEF1F4; --card:#FFFFFF; --ink:#1C2733; --ink2:#5A6B7A;
+  --pole-a:#1F4E79; --pole-a-soft:#DDE8F2; --pole-b:#C96F1E; --pole-b-soft:#F6E8D8;
+  --good:#2E7D4F; --line:rgba(28,39,51,.16);
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root{
+  --paper:#12181F; --card:#1A222B; --ink:#E7ECF0; --ink2:#95A4B1;
+  --pole-a:#7FB3E0; --pole-a-soft:#20303F; --pole-b:#E8964A; --pole-b-soft:#39281A;
+  --good:#5FBE85; --line:rgba(231,236,240,.18);
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 var(--sans)}
+.wrap{max-width:720px;margin:0 auto;padding:16px 20px 80px}
+h1{font:700 26px/1.25 Georgia,serif;margin:18px 0 8px;text-wrap:balance}
+h3{font:700 16px var(--sans);margin:20px 0 8px}
+.hint{font:13.5px var(--sans);color:var(--ink2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:14px 0}
+.step-eyebrow{font:700 11px var(--mono);letter-spacing:1.2px;color:var(--pole-a);text-transform:uppercase}
+.formula{font:14px/1.7 var(--mono);background:var(--pole-a-soft);border-radius:8px;padding:12px 14px;margin:10px 0}
+.zad{font:17px/1.6 var(--sans);background:var(--pole-b-soft);border-radius:10px;padding:14px 16px;margin:10px 0}
+label{display:block;font:600 13px var(--sans);color:var(--ink2);margin:12px 0 4px}
+input[type=text],textarea{width:100%;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font:15px var(--sans)}
+textarea{min-height:64px;resize:vertical}
+.btn{display:inline-block;border:0;border-radius:9px;background:var(--pole-a);color:#fff;font:600 15px var(--sans);padding:11px 20px;cursor:pointer;margin-top:14px}
+@media (prefers-color-scheme: dark){.btn{color:#0e1116}}
+.btn.spark{background:var(--pole-b)}
+.btn.ghost{background:transparent;color:var(--pole-a);border:1px solid var(--pole-a)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chip{border:1px solid var(--line);background:var(--pole-b-soft);color:var(--ink);border-radius:999px;padding:7px 14px;font:14px var(--sans);cursor:pointer}
+.chip.on{background:var(--pole-a);border-color:var(--pole-a);color:#fff}
+.axis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+@media(max-width:600px){.axis{grid-template-columns:1fr}}
+.axis button{text-align:left;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:12px 14px;font:600 14px var(--sans);cursor:pointer}
+.axis button.on{border-color:var(--pole-b);background:var(--pole-b-soft)}
+.pcard{border-left:3px solid var(--pole-b);padding:10px 14px;background:var(--card);border-radius:0 10px 10px 0;margin:10px 0}
+.pcard b{font:700 15px var(--sans)}
+.pcard .ex{font:13px var(--sans);color:var(--ink2);margin-top:4px}
+.story{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--card);margin:10px 0}
+.story .gl{font-size:26px;line-height:1.2}
+.story b{font:700 14px var(--sans)}
+.story p{font:13px/1.55 var(--sans);color:var(--ink2);margin:4px 0 0}
+.idea{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0;background:var(--card)}
+.idea .minus{color:var(--pole-b);font:13px var(--sans)}
+.final{border:2px solid var(--good);border-radius:12px;padding:18px 20px;margin:16px 0;background:var(--card)}
+.dots{display:flex;gap:6px;margin:18px 0 4px}
+.dots i{width:26px;height:4px;border-radius:2px;background:var(--line)}
+.dots i.on{background:var(--pole-a)}
+.sid{font:11px var(--mono);color:var(--ink2);position:fixed;top:8px;right:12px}
+</style>
+</head>
+<body>
+<div class="sid" id="sidLbl"></div>
+<main class="wrap">
+<h1>Разберём вашу задачу за один разговор</h1>
+<p class="hint">Идите шаг за шагом, думайте вслух. Правильных ответов нет - есть ваши.</p>
+<div class="dots" id="dots"></div>
+
+<!-- ШАГ 0: СИТУАЦИЯ -->
+<div class="card" id="s0">
+  <div class="step-eyebrow">Шаг 1 · Ситуация</div>
+  <h3>Вот ситуация. Представьте, что она ваша</h3>
+  <div class="zad" id="zadText"></div>
+  <label>Что вы хотите получить в результате? (своими словами)</label>
+  <input type="text" id="goal">
+  <label>Что нельзя менять?</label>
+  <input type="text" id="limits">
+  <button class="btn" onclick="next0()">Дальше</button>
+</div>
+
+<!-- ИНТЕРЛЮДИЯ рукава C -->
+<div class="card" id="sc" hidden>
+  <div class="step-eyebrow">Примеры</div>
+  <h3>Посмотрите, как решали похожие задачи</h3>
+  <p class="hint">Просто полистайте перед разбором.</p>
+  <div id="cGallery"></div>
+  <button class="btn" onclick="go(1)">К разбору</button>
+</div>
+
+<!-- ШАГ 1: ПРОТИВОРЕЧИЕ -->
+<div class="card" id="s1" hidden>
+  <div class="step-eyebrow">Шаг 2 · Конфликт</div>
+  <h3>Соберём противоречие</h3>
+  <p class="hint">Очевидный ход что-то улучшает и одновременно что-то портит. Назовём это честно.</p>
+  <div class="formula">Если <b>[очевидное действие]</b>, то <b>[что улучшится]</b>, но <b>[что испортится]</b></div>
+  <label>Очевидное действие</label><input type="text" id="tpAct">
+  <label>Что улучшится</label><input type="text" id="tpGood">
+  <label>Что испортится</label><input type="text" id="tpBad">
+  <button class="btn" onclick="go(2)">Дальше</button>
+</div>
+
+<!-- ШАГ 2: ИДЕАЛ -->
+<div class="card" id="s2" hidden>
+  <div class="step-eyebrow">Шаг 3 · Идеал</div>
+  <h3>Сформулируем идеальный результат</h3>
+  <p class="hint">Смело, до предела - идеал отсекает слабые варианты ещё до перебора.</p>
+  <div class="formula"><b>[кто/что]</b> САМ <b>[делает нужное]</b>, не тратя, не портя, даже принося пользу</div>
+  <label>Кто или что</label><input type="text" id="ikrWho">
+  <label>Сам делает что</label><input type="text" id="ikrWhat">
+  <button class="btn" onclick="go(3)">Дальше</button>
+</div>
+
+<!-- ШАГ 3: РЕСУРСЫ И ХОДЫ -->
+<div class="card" id="s3" hidden>
+  <div class="step-eyebrow">Шаг 4 · Ресурсы и ходы</div>
+  <h3>Что уже есть и поможет даром?</h3>
+  <p class="hint">Осмотритесь вокруг задачи: предметы, люди, привычки, время. Правило: тот, кто мешает, тот и поможет.</p>
+  <div class="chips" id="resChips"></div>
+  <label>Добавить свой ресурс</label>
+  <div style="display:flex;gap:8px"><input type="text" id="resInput"><button class="btn" style="margin-top:0" onclick="addRes()">+</button></div>
+  <h3 style="margin-top:24px">Разведём требования врозь</h3>
+  <p class="hint">Противоречие не сглаживают - его разрешают, разделив требования. Выбирайте ходы и записывайте идеи, как только придут:</p>
+  <div class="axis" id="axisBox"></div>
+  <div id="axisOut"></div>
+  <button class="btn" onclick="go(4)">К идеям</button>
+</div>
+
+<!-- ШАГ 4: ИДЕИ -->
+<div class="card" id="s4" hidden>
+  <div class="step-eyebrow">Шаг 5 · Идеи</div>
+  <h3>Записывайте идеи. У каждой - обязательный минус</h3>
+  <p class="hint">Минус - это не приговор, а ваша следующая маленькая задача. Когда идеи кончились - найдите ещё одну.</p>
+  <label>Идея</label><input type="text" id="ideaText">
+  <label>Её минус</label><input type="text" id="ideaMinus">
+  <button class="btn" onclick="addIdea()">Добавить идею</button>
+  <div id="ideasBox"></div>
+  <button class="btn ghost" onclick="go(3)">Вернуться к ходам</button>
+  <button class="btn spark" id="toFinal" onclick="go(5)" hidden>Выбрать и закончить</button>
+</div>
+
+<!-- ШАГ 5: ФИНАЛ -->
+<div class="card" id="s5" hidden>
+  <div class="step-eyebrow">Шаг 6 · Первый шаг</div>
+  <h3>Отметьте идею, которую берёте, и первый шаг</h3>
+  <div id="pickBox"></div>
+  <label>Что сделаете в ближайшие 24 часа?</label>
+  <input type="text" id="firstStep">
+  <button class="btn spark" onclick="finish()">Готово</button>
+  <div id="finalBox"></div>
+</div>
+</main>
+
+<script>
+// ── параметры сессии ────────────────────────────────────────────────────────
+const Q = new URLSearchParams(location.search);
+const RUK = (Q.get('ruk')||'a').toLowerCase();       // a | b | c
+const Z = (Q.get('z')||'biz').toLowerCase();          // biz | byt
+const SID = Q.get('sid') || (RUK+'-'+Z+'-'+Math.random().toString(36).slice(2,6));
+document.getElementById('sidLbl').textContent = SID;
+
+const ZADACHI = {
+  biz: 'У вас небольшая кофейня. Постоянные клиенты просят скидку. Дать - жалко маржу, не дать - боитесь, что уйдут к соседям.',
+  byt: 'Каждое утро сборы съедают час: вещи теряются, все опаздывают, день начинается с нервов.'
+};
+document.getElementById('zadText').textContent = ZADACHI[Z] || ZADACHI.biz;
+
+const RES_SUGGEST = {
+  biz: ['сам просящий скидку клиент','пустые часы дня','стена заведения','друзья клиента','привычка клиента','маржинальный десерт','уже сделанная работа'],
+  byt: ['вечер накануне','дверь и место у выхода','сами дети/домашние','привычка-якорь (кофе, будильник)','телефон','то, что всегда теряется','повторяемость каждого утра']
+};
+
+// ── данные подсказок ────────────────────────────────────────────────────────
+// Приёмы (для всех рукавов; в B показываются ТОЛЬКО имя и формулировка).
+// Истории-аналоги (только рукава A и C) - из базы проекта, по задаче.
+const AXES=[
+ {id:'time',name:'Развести во времени',desc:'Одно требование - в один момент, другое - в другой',
+  priems:[{n:'Предварительное действие',t:'Сделать нужное заранее, до пикового момента',ex:{biz:'Скидка не сейчас, а на следующую покупку',byt:'Всё, что можно, готовится с вечера'}},
+          {n:'Периодическое действие',t:'Действовать импульсами, паузы использовать для другого',ex:{biz:'Акция только в определённые часы',byt:'Одно общее «время сборов» со своим сигналом'}}],
+  stories:{biz:[{g:'🚦',b:'Светофор',p:'Дороге нужно быть открытой и закрытой. Неразрешимо? Развели по времени - конфликт исчез.'},
+                {g:'☕',b:'Скидка в мёртвые часы',p:'Скидка действует только днём, когда зал пуст: маржа вечера цела, пустые часы приносят деньги.'}],
+           byt:[{g:'🐑',b:'Сеть на овце',p:'Шерсть собирают не после стрижки, а сетью прямо на овце: к нужному моменту всё уже собрано.'},
+                {g:'🌲',b:'Красят до вырубки',p:'Древесину окрашивают ещё растущей - к моменту работы краска уже внутри. Что можно «прокрасить с вечера»?'}]}},
+ {id:'space',name:'Развести в пространстве',desc:'Одно требование - в одном месте, другое - в другом',
+  priems:[{n:'Местное качество',t:'Разным частям - разные свойства, каждая в лучших для неё условиях',ex:{biz:'Скидка не на всё меню, а на один островок',byt:'У каждой вещи одно закреплённое место'}},
+          {n:'Вынесение',t:'Отделить мешающую часть или выделить единственно нужную',ex:{biz:'Переговоры о цене - не у кассы, а в подписке',byt:'Всё утреннее вынесено к двери'}}],
+  stories:{biz:[{g:'🐟',b:'Глаз четырёхглазой рыбы',p:'Смотреть и над водой, и под водой? Сетчатка разделена на две зоны - требования разведены в пространстве.'},
+                {g:'🧱',b:'Барьеры-змейка',p:'Одна и та же площадь - и очередь помещается, и проход свободен: пространство поделили умно, а не расширили.'}],
+           byt:[{g:'🚁',b:'Горючее остаётся на земле',p:'Электровертолёт не возит топливо - источник вынесен туда, где ему место. Что можно не «возить» по квартире каждое утро?'},
+                {g:'🛡',b:'Кольчуга',p:'Жёсткая в каждом кольце, гибкая целиком: порядок в каждой мелочи даёт свободу всему утру.'}]}},
+ {id:'struct',name:'Части и целое',desc:'Часть устроена одним способом, целое - противоположным',
+  priems:[{n:'Дробление',t:'Разделить на независимые части - вплоть до «по одному»',ex:{biz:'Не общая скидка, а копилка per-покупка',byt:'Один большой сбор дробится на микрошаги по 30 секунд'}},
+          {n:'Объединение',t:'Соединить смежное - появится новое качество',ex:{biz:'Кофе + маржинальный десерт: набор дешевле, прибыль выше',byt:'Вещи одного выхода соединены физически'}}],
+  stories:{biz:[{g:'🌾',b:'Вал Лаваля и камыш',p:'Вал наращивали жёсткостью - ломался. Камыш подсказал обратное: гибкий стебель сам уравновешивается.'},
+                {g:'🍰',b:'Набор вместо скидки',p:'Целое дешевле, части маржинальны: клиент видит выгоду, касса видит прибыль.'}],
+           byt:[{g:'🥄',b:'Ложечка на пробке',p:'Ложку вечно теряли - её объединили с крышкой банки. Что можно физически прикрепить к тому, с чем оно всегда нужно?'},
+                {g:'🚲',b:'Велосипедная цепь',p:'Жёсткие звенья - гибкая цепь. Утро из жёстких «звеньев» по минуте гнётся под любой день.'}]}},
+ {id:'cond',name:'По условию',desc:'Для одного случая - одно свойство, для другого - другое',
+  priems:[{n:'Обратить вред в пользу',t:'Усилить мешающее или сложить два мешающих, чтобы получить пользу',ex:{biz:'Просьба о скидке = канал: «приведи друга - обе чашки дешевле»',byt:'Опоздание получает цену: кто собрался последним - моет посуду'}},
+          {n:'Частичное или избыточное действие',t:'Не дозировать точно: дать чуть больше там, где это дёшево',ex:{biz:'Вместо скидки - щедрый бонус с копеечной себестоимостью',byt:'Дубли дешёвых мелочей везде, где они теряются'}}],
+  stories:{biz:[{g:'🦺',b:'Жидкая броня',p:'Мягкая при движении, твёрдая при ударе: свойство зависит от условия - обе стороны довольны.'},
+                {g:'⚡',b:'Прорези отводят трещины',p:'Трещины не победили - им дали удобный путь в сторону от кабеля. Вред направили, а не запретили.'}],
+           byt:[{g:'✈️',b:'Выхлоп Ил-2 в бензобак',p:'Нужен негорючий газ? Он уже есть - собственный выхлоп. Ресурс нашёлся, когда перестали искать «правильный».'},
+                {g:'🧯',b:'Избыточный нагрев ампул',p:'Не дозировать точно, а дать с запасом там, где запас дёшев: лишнее тепло гасится жидкостью само.'}]}},
+ {id:'sub',name:'Сменить носителя',desc:'Пусть нужное делает другое вещество, предмет или посредник',
+  priems:[{n:'Посредник',t:'Ввести промежуточный предмет, который потом легко убрать',ex:{biz:'Карта лояльности говорит о цене вместо вас',byt:'Чек-лист у двери отвечает на «всё ли взяли» вместо родителей'}},
+          {n:'Изменение состояния',t:'Твёрдое, когда надо держать; текучее, когда надо меняться',ex:{biz:'Цена «твёрдая», бонус «текучий» под клиента',byt:'Жёсткий каркас утра + гибкое наполнение'}}],
+  stories:{biz:[{g:'🏭',b:'Флоат-стекло',p:'Вместо конвейера с колёсами - ванна расплавленного олова: идеальную ровность делает сама физика, бесплатно.'},
+                {g:'🕸',b:'Застёжка скафандра',p:'Группа шла цепочкой аналогий: насекомые - паук - стежки, и пришла к спиральным пружинам в резине.'}],
+           byt:[{g:'🦁',b:'Тряпочка на нос льву',p:'Со львом не спорят - между ним и проблемой ставят посредника. Кто или что может быть «тряпочкой» в вашем утре?'},
+                {g:'🐍',b:'Кольцо Кекуле',p:'Формула бензола пришла из образа змеи, кусающей хвост. Замкните утро в кольцо: конец вечера = начало утра.'}]}
+ }
+];
+
+// ── журнал сессии ───────────────────────────────────────────────────────────
+const LOG = { sid: SID, ruk: RUK, z: Z, start: Date.now(), sobytiya: [], pokazano: [] };
+function zap(e, d) {
+  LOG.sobytiya.push({ t: Date.now() - LOG.start, e, d: d || null });
+  try { localStorage.setItem('eksp-' + SID, JSON.stringify(LOG)); } catch {}
+}
+zap('start', { ruk: RUK, z: Z });
+
+// ── навигация ───────────────────────────────────────────────────────────────
+let step = 0; const STEPS = 6; let ideas = [];
+function dots(){const d=document.getElementById('dots');d.innerHTML='';for(let i=0;i<STEPS;i++){const s=document.createElement('i');if(i<=step)s.className='on';d.appendChild(s);}}
+function hideAll(){['s0','sc','s1','s2','s3','s4','s5'].forEach(id=>document.getElementById(id).hidden=true);}
+function go(n){step=n;hideAll();document.getElementById('s'+n).hidden=false;dots();zap('shag',{n});
+  if(n===3)renderStep3();
+  if(n===5)renderPick();
+  window.scrollTo({top:0,behavior:'smooth'});}
+function val(id){return document.getElementById(id).value.trim();}
+
+function next0(){
+  zap('situaciya',{goal:val('goal'),limits:val('limits')});
+  if(RUK==='c'){ hideAll(); document.getElementById('sc').hidden=false; renderCGallery(); zap('kartochki-do',{}); }
+  else go(1);
+}
+function renderCGallery(){
+  const g=document.getElementById('cGallery'); g.innerHTML='';
+  AXES.forEach(a=>(a.stories[Z]||[]).forEach(s=>{
+    LOG.pokazano.push(s.b);
+    g.insertAdjacentHTML('beforeend','<div class="story"><div class="gl">'+s.g+'</div><div><b>'+s.b+'</b><p>'+s.p+'</p></div></div>');
+  }));
+}
+
+// ── шаг 3: ресурсы + оси ────────────────────────────────────────────────────
+function renderStep3(){
+  const rb=document.getElementById('resChips');
+  if(!rb.childElementCount)(RES_SUGGEST[Z]||[]).forEach(r=>pushRes(r));
+  const box=document.getElementById('axisBox');
+  if(!box.childElementCount)AXES.forEach(a=>{const b=document.createElement('button');b.textContent=a.name;b.title=a.desc;b.onclick=()=>openAxis(a,b);box.appendChild(b);});
+}
+function pushRes(text){const c=document.createElement('button');c.className='chip';c.textContent=text;c.onclick=()=>{c.classList.toggle('on');zap('resurs',{r:text,on:c.classList.contains('on')});};document.getElementById('resChips').appendChild(c);}
+function addRes(){const v=val('resInput');if(v){pushRes(v);zap('resurs-svoj',{r:v});document.getElementById('resInput').value='';}}
+function openAxis(a,btn){
+  document.querySelectorAll('.axis button').forEach(x=>x.classList.remove('on'));btn.classList.add('on');
+  zap('os',{id:a.id});
+  const o=document.getElementById('axisOut');
+  let html='<p class="hint" style="margin-top:14px"><b>'+a.name+':</b> '+a.desc+'.</p>';
+  // Приёмы: в рукаве B - только имя+формулировка; в A/C - с примером.
+  html+=a.priems.map(p=>'<div class="pcard"><b>'+p.n+'</b><div>'+p.t+'</div>'
+    +(RUK!=='b'&&p.ex&&p.ex[Z]?'<div class="ex">Пример: '+p.ex[Z]+'</div>':'')+'</div>').join('');
+  // Истории-образы: только в A и C.
+  if(RUK!=='b'){
+    (a.stories[Z]||[]).forEach(s=>{ if(!LOG.pokazano.includes(s.b))LOG.pokazano.push(s.b); });
+    html+=(a.stories[Z]||[]).map(s=>'<div class="story"><div class="gl">'+s.g+'</div><div><b>'+s.b+'</b><p>'+s.p+'</p></div></div>').join('');
+    html+='<p class="hint">Смотрите на аналог и спрашивайте: как ЭТОТ ход выглядит в моей задаче? Идея пришла - жмите «К идеям» и записывайте.</p>';
+  } else {
+    html+='<p class="hint">Примерьте каждый приём к задаче: как он выглядит именно у вас? Идея пришла - жмите «К идеям» и записывайте.</p>';
+  }
+  o.innerHTML=html;
+}
+
+// ── идеи ────────────────────────────────────────────────────────────────────
+function addIdea(){
+  const t=val('ideaText'),m=val('ideaMinus');
+  if(!t)return;
+  if(!m){alert('Назовите минус идеи - без него идея не принимается. Минус это просто следующая маленькая задача.');return;}
+  ideas.push({t,m,sel:false});
+  zap('ideya',{t,m});
+  document.getElementById('ideaText').value='';document.getElementById('ideaMinus').value='';
+  renderIdeas();
+}
+function renderIdeas(){
+  const b=document.getElementById('ideasBox');
+  b.innerHTML=ideas.map((i)=>'<div class="idea"><b>'+i.t+'</b><div class="minus">минус: '+i.m+'</div></div>').join('');
+  document.getElementById('toFinal').hidden=ideas.length===0;
+}
+function renderPick(){
+  const b=document.getElementById('pickBox');
+  b.innerHTML=ideas.map((i,n)=>'<div class="idea"><label style="margin:0;font-weight:400"><input type="radio" name="pick" value="'+n+'"> <b>'+i.t+'</b></label><div class="minus">минус: '+i.m+'</div></div>').join('');
+}
+function finish(){
+  const sel=document.querySelector('input[name=pick]:checked');
+  const vybor=sel?ideas[Number(sel.value)]:null;
+  const shag1=val('firstStep');
+  zap('final',{vybor:vybor?vybor.t:null,minus:vybor?vybor.m:null,shag:shag1,idej:ideas.length});
+  const fb=document.getElementById('finalBox');
+  fb.innerHTML='<div class="final"><b>Спасибо! Сессия записана.</b>'
+    +(vybor?'<p style="margin:8px 0 4px">Ваш выбор: <b>'+vybor.t+'</b></p><p class="hint">Первый шаг: '+(shag1||'-')+'</p>':'<p class="hint">Идея не выбрана.</p>')
+    +'<button class="btn" onclick="vygruzit()">Выгрузить лог сессии</button>'
+    +'<p class="hint" style="margin-top:8px">Если файл не скачался - лог ниже, выделите и скопируйте целиком.</p>'
+    +'<textarea id="logDump" style="min-height:100px;font:11px var(--mono)"></textarea></div>';
+  document.getElementById('logDump').value=JSON.stringify(LOG);
+}
+function vygruzit(){
+  const blob=new Blob([JSON.stringify(LOG,null,1)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=SID+'.json';a.click();
+}
+dots();
+</script>
+</body>
+</html>
